@@ -53,6 +53,12 @@ void VulkanRenderer::createInstance()
 		instanceExtensions.push_back(glfwExtensions[i]);
 	}
 
+	// Check instance Extensions Support
+	if (!checkInstanceExtensionsSupport(&instanceExtensions))
+	{
+		throw std::runtime_error("VKInstance does not support required extensions!");
+	}
+
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size());
 	createInfo.ppEnabledExtensionNames = instanceExtensions.data();
 
@@ -61,7 +67,42 @@ void VulkanRenderer::createInstance()
 	createInfo.ppEnabledLayerNames = nullptr;
 
 	// Create Instance
+	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create Vulkan Instance");
+	}
 
+}
 
+bool VulkanRenderer::checkInstanceExtensionsSupport(std::vector<const char*>* checkExtensions)
+{
+	// Need to get Number of extension to create array of correct size to hold extensions
+	uint32_t extensionsCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, nullptr);
+
+	// Create a list of VkExtensionsProperties using count
+	std::vector<VkExtensionProperties> extensions(extensionsCount);
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount, extensions.data());
+
+	// Check if Given extensions are in  list of available extensions
+	for (const auto &checkExtensions : *checkExtensions)
+	{
+		bool hasExtension = false;
+		for (const auto& extension : extensions)
+		{
+			if (strcmp(checkExtensions, extension.extensionName))
+			{
+				hasExtension = true;
+				break;
+			}
+		}
+		if (!hasExtension)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

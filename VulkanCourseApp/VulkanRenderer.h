@@ -9,11 +9,8 @@
 class VulkanRenderer
 {
 public:
-	VulkanRenderer();
 
 	int init(GLFWwindow* newWindow);
-
-	~VulkanRenderer();
 
 private:
 	GLFWwindow* window;
@@ -22,6 +19,11 @@ private:
 	VkInstance instance;
 
 	// Vulkan Functions 
+	// - Create Functions
 	void createInstance();
+
+	// - Support Functions
+	bool checkInstanceExtensionsSupport(std::vector<const char*>* checkExtensions);
+
 };
 
