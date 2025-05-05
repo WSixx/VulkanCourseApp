@@ -9,6 +9,7 @@ int VulkanRenderer::init(GLFWwindow* newWindow)
 	{
 		createInstance();
 		getPhysicalDevice();
+		createLogicalDevice();
 	}
 	catch (const std::runtime_error&e)
 	{
@@ -21,8 +22,9 @@ int VulkanRenderer::init(GLFWwindow* newWindow)
 	return 0;
 }
 
-void VulkanRenderer::cleanup()
+void VulkanRenderer::cleanup() const
 {
+	vkDestroyDevice(mainDevice.logicalDevice, nullptr);
 	vkDestroyInstance(instance, nullptr);
 }
 
@@ -81,6 +83,46 @@ void VulkanRenderer::createInstance()
 	}
 
 }
+
+void VulkanRenderer::createLogicalDevice()
+{
+	// Get the queue Family indices for the chosen Physical device
+	QueueFamilyIndices indices = getQueueFamilies(mainDevice.physicalDevice);
+
+	// Queue Logical Device needs to create and info to do so (Only 1 for now, will has more)
+	VkDeviceQueueCreateInfo queueCreateInfo = {};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = indices.graphicsFamily;		// index of the family to create the queue from
+	queueCreateInfo.queueCount = 1;									// number of queues to create
+	float priority = 1.0f;
+	queueCreateInfo.pQueuePriorities = &priority;					// Vulkan needs to know to handle multiple queues, so decide priority (1 = highest priority)
+
+	// Information to create logical device (sometimes called "device")
+	VkDeviceCreateInfo deviceCreateInfo = {};
+	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	deviceCreateInfo.queueCreateInfoCount = 1;						// Number of queue create infos
+	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;			// List of queue create infos so device can create required queues
+	deviceCreateInfo.enabledExtensionCount = 0;						// Number of enabled logical device extensions
+	deviceCreateInfo.ppEnabledExtensionNames = nullptr;				// List of enabled logical device extensions
+	
+	// Physicaldevice features the Logical Device will be using
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;			// Physical device features Logical device will use 
+
+	// Create the Logical device for the given Physical Device
+	VkResult result = vkCreateDevice(mainDevice.physicalDevice, &deviceCreateInfo, nullptr, &mainDevice.logicalDevice);
+
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create a Logical Device!");
+	}
+
+	// Queues are created at the same time as the device
+	// So we want handle to queues
+	// From give Logical device , of give queue family of given queue index (0 since only one queue), place reference in given VkQueue
+	vkGetDeviceQueue(mainDevice.logicalDevice, indices.graphicsFamily, 0, &graphicsQueue);
+
+}	
 
 void VulkanRenderer::getPhysicalDevice()
 {

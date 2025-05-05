@@ -13,7 +13,7 @@ class VulkanRenderer
 public:
 
 	int init(GLFWwindow* newWindow);
-	void cleanup();
+	void cleanup() const;
 
 private:
 	GLFWwindow* window;
@@ -25,10 +25,12 @@ private:
 		VkPhysicalDevice physicalDevice; // My real device (Ex: my GPU)
 		VkDevice logicalDevice;			// Interface to interact with real device
 	} mainDevice;
+	VkQueue graphicsQueue;
 
 	// Vulkan Functions 
 	// - Create Functions
 	void createInstance();
+	void createLogicalDevice();
 
 	// - get Functions
 	void getPhysicalDevice();
